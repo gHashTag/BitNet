@@ -136,12 +136,12 @@ def prepare_model():
             # quantize to i2s
             if platform.system() != "Windows":
                 if quant_embd:
-                    run_command(["./build/bin/llama-quantize", "--token-embedding-type", "q6_k", f32_model, i2s_model, "I2_S", "1", "1"], log_step="quantize_to_i2s")
+                    run_command(["./build/bin/llama-quantize", "--token-embedding-type", "f16", f32_model, i2s_model, "I2_S", "1", "1"], log_step="quantize_to_i2s")
                 else:
                     run_command(["./build/bin/llama-quantize", f32_model, i2s_model, "I2_S", "1"], log_step="quantize_to_i2s")
             else:
                 if quant_embd:
-                    run_command(["./build/bin/Release/llama-quantize", "--token-embedding-type", "q6_k", f32_model, i2s_model, "I2_S", "1", "1"], log_step="quantize_to_i2s")
+                    run_command(["./build/bin/Release/llama-quantize", "--token-embedding-type", "f16", f32_model, i2s_model, "I2_S", "1", "1"], log_step="quantize_to_i2s")
                 else:
                     run_command(["./build/bin/Release/llama-quantize", f32_model, i2s_model, "I2_S", "1"], log_step="quantize_to_i2s")
 
@@ -228,7 +228,7 @@ def parse_args():
     parser.add_argument("--model-dir", "-md", type=str, help="Directory to save/load the model", default="models")
     parser.add_argument("--log-dir", "-ld", type=str, help="Directory to save the logging info", default="logs")
     parser.add_argument("--quant-type", "-q", type=str, help="Quantization type", choices=SUPPORTED_QUANT_TYPES[arch], default="i2_s")
-    parser.add_argument("--quant-embd", action="store_true", help="Quantize the embeddings to q6_k")
+    parser.add_argument("--quant-embd", action="store_true", help="Quantize the embeddings to f16")
     parser.add_argument("--use-pretuned", "-p", action="store_true", help="Use the pretuned kernel parameters")
     return parser.parse_args()
 
