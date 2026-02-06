@@ -167,6 +167,7 @@ SAFETENSORS_DATA_TYPES: dict[str, DataType] = {
     'F16': DT_F16,
     'F32': DT_F32,
     'I32': DT_I32,
+    'U8': DT_I2,  # Packed ternary weights stored as uint8
 }
 
 # TODO: match this with `llama_ftype`
@@ -1208,6 +1209,9 @@ class OutputFile:
     def add_meta_vocab(self, vocab: Vocab) -> None:
         # Ensure that tokenizer_model is added to the GGUF model
         self.gguf.add_tokenizer_model(vocab.tokenizer_model)
+        # FIX: Add pre-tokenizer type for LLaMA 3 BPE tokenizer
+        self.gguf.add_tokenizer_pre("llama-bpe")
+        logger.info("Added tokenizer.ggml.pre = llama-bpe")
         # Extract model vocabulary for model conversion
         tokens, scores, toktypes = self.extract_vocabulary_from_model(vocab)
 
@@ -1222,6 +1226,9 @@ class OutputFile:
     def add_tensor_info(self, name: str, tensor: LazyTensor) -> None:
         n_elements = int(np.prod(tensor.shape))
         raw_dtype = getattr(tensor.data_type, 'ggml_type', None)
+        # I2 tensors need explicit raw_dtype since UnquantizedDataType lacks ggml_type
+        if raw_dtype is None and tensor.data_type.name == "I2":
+            raw_dtype = gguf.GGMLQuantizationType.I2_S
         data_type = getattr(tensor.data_type, 'quantized_type', None) or tensor.data_type.dtype
         data_nbytes = tensor.data_type.elements_to_bytes(n_elements)
         if tensor.data_type.name == "I2":

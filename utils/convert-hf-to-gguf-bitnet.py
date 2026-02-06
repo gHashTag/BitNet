@@ -953,11 +953,17 @@ class LlamaModel(Model):
 
 
 @Model.register("BitnetForCausalLM")
+@Model.register("BitNetForCausalLM")
 class BitnetModel(Model):
     model_arch = gguf.MODEL_ARCH.BITNET
 
     def set_vocab(self):
-        self._set_vocab_sentencepiece()
+        # BitNet-b1.58-2B-4T uses LLaMA 3 BPE tokenizer (tokenizer.json), not SentencePiece
+        tokenizer_model_path = self.dir_model / 'tokenizer.model'
+        if tokenizer_model_path.is_file():
+            self._set_vocab_sentencepiece()
+        else:
+            self._set_vocab_gpt2()
         
     def set_gguf_parameters(self):
         super().set_gguf_parameters()
@@ -988,7 +994,7 @@ class BitnetModel(Model):
 
         for name, data_torch in self.get_tensors():
             # we don't need these
-            if name.endswith((".attention.masked_bias", ".attention.bias", ".rotary_emb.inv_freq")):
+            if name.endswith((".attention.masked_bias", ".attention.bias", ".rotary_emb.inv_freq", "weight_scale")):
                 continue
 
             old_dtype = data_torch.dtype
